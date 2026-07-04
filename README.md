@@ -1,28 +1,43 @@
-# TicketPilot — Autonomous IT Service Desk Triage & Resolution Agent
+---
+title: TicketPilot
+emoji: 🎫
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 18081
+pinned: false
+---
 
-TicketPilot is a secure, multi-agent IT service desk assistant built using the Google Agent Development Kit (ADK 2.0). It automates the classification, deduplication, runbook-based auto-resolution, and routing of incoming IT support requests. It features a Human-in-the-Loop approval stage and an integrated Model Context Protocol (MCP) server.
+# 🎫 TicketPilot — Autonomous IT Service Desk Triage & Resolution Agent
 
-## Assets
+> An autonomous, secure IT service desk triage and resolution agent built with **Google ADK 2.0** and Gemini that automatically ingests, classifies, deduplicates, and resolves incoming support requests through a graph-based workflow — combining LLM intelligence, security guardrails, custom MCP tools, and human-in-the-loop oversight.
+
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Google ADK 2.0](https://img.shields.io/badge/Google%20ADK-2.0-4285F4.svg)](https://adk.dev/)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
+
+---
+
+## 🎨 Assets
 
 ![TicketPilot Cover Banner](assets/cover_page_banner.png)
 
 ![TicketPilot Architecture Diagram](assets/architecture_diagram.png)
 
-***
+---
 
-## Key Features
+## ✨ Features
 
-- **🛡️ Secure Ingestion Pipeline**: Checks for prompt injections, scrubs PII (Credit Cards, SSNs, Passwords), and enforces corporate email domain authorization.
-- **🤖 Specialized Multi-Agent Orchestration**: A main orchestrator coordinates six focused sub-agents (Ingestion, Classification, Deduplication, Resolution, Routing, Escalation).
-- **🔌 Model Context Protocol (MCP) Integration**: Connects to user directories, ongoing corporate outages, runbooks, and KB publication tools over standard stdio transport.
-- **✋ Human-in-the-Loop Checkpoints**: Automatically pauses and requests operator confirmation before modifying settings or resolving high-priority tickets.
-- **⏱️ API Quota Protection (Rate-Limiting)**: Custom `RateLimitedGemini` implementation that injects a 5-second delay to smooth traffic spikes and avoid Google API `429 ResourceExhausted` rate limits.
+- **🛡️ Secure Ingestion** — Checks inputs for prompt injections, scrubs PII (Credit Cards, SSNs, Passwords), and enforces corporate email domain authorization.
+- **🔄 Graph-Based Control Flow** — Orchestrates support requests using a directed graph with custom routing nodes implemented via the ADK workflow.
+- **🤖 Multi-Agent Delegation** — Leverages a main triage orchestrator delegating dynamically to 6 sub-agents (Ingestion, Classification, Deduplication, Resolution, Routing, Escalation).
+- **🔌 Model Context Protocol (MCP)** — Integrated MCP server running on local stdio transport to query user directory profiles, active incident storms, and search runbooks.
+- **👤 Human-in-the-Loop (HITL)** — High-priority requests and manual configuration adjustments automatically pause for manager approval.
+- **⏱️ API Quota Protection (Rate-Limiting)** — Custom `RateLimitedGemini` decorator subclassing that delays requests to prevent free-tier 429 quota exhaustion.
 
-***
+---
 
-## System Architecture
-
-TicketPilot organizes its workflows using a deterministic directed acyclic graph (DAG) implemented in the ADK workflow runner:
+## 🏗️ Architecture
 
 ```mermaid
 graph TD
@@ -63,11 +78,20 @@ graph TD
     HITL --> OUT
     SEC_EV --> OUT
     OUT --> END[Structured JSON Output]
+
+    style START fill:#4285F4,stroke:#333,color:#fff
+    style SEC fill:#FBBC04,stroke:#333,color:#000
+    style SEC_EV fill:#EA4335,stroke:#333,color:#fff
+    style ORCH fill:#4285F4,stroke:#333,color:#fff
+    style HITL fill:#9C27B0,stroke:#333,color:#fff
+    style USER fill:#9C27B0,stroke:#333,color:#fff
+    style OUT fill:#607D8B,stroke:#333,color:#fff
+    style END fill:#34A853,stroke:#333,color:#fff
 ```
 
-***
+---
 
-## Directory Structure
+## 📁 Project Structure
 
 ```
 ticket-pilot/
@@ -86,115 +110,99 @@ ticket-pilot/
 │   ├── unit/
 │   └── integration/
 ├── Makefile                     # Build & run automation
-├── pyproject.toml               # Python project configuration & dependencies
+├── pyproject.toml               # Dependencies & tooling configuration
 └── DEMO_SCRIPT.txt              # Timed demo presentation guide
 ```
 
-***
+---
 
-## Prerequisites
+## 🚀 Quick Start
 
-- **Python 3.11–3.13** (Verify with `python --version`)
-- **uv** (Astral's fast Python package manager)
-- **Gemini API Key** from [Google AI Studio](https://aistudio.google.com/apikey)
+### Prerequisites
 
-***
+- **Python 3.11–3.13**
+- **uv** — [Install](https://docs.astral.sh/uv/getting-started/installation/)
+- **Gemini API Key** — Get one from [Google AI Studio](https://aistudio.google.com/)
 
-## Getting Started
+### Setup
 
-### 1. Project Installation
-Clone the repository, navigate into the directory, and install dependencies using `uv`:
 ```bash
+# 1. Clone the repository
 git clone https://github.com/gururajpanse/TicketPilot.git
 cd ticket-pilot
+
+# 2. Configure your environment file
+cp .env.example .env
+# Edit .env and insert your GOOGLE_API_KEY
+
+# 3. Install dependencies
 make install
-```
 
-### 2. Configure Environment Variables
-Copy `.env.example` to `.env` and configure your API key:
-```bash
-GOOGLE_API_KEY=your_gemini_api_key_here
-GOOGLE_GENAI_USE_VERTEXAI=False
-GEMINI_MODEL=gemini-3.1-flash-lite
-MOCK_MODE=False
-```
-> [!TIP]
-> **What is MOCK_MODE?**
-> Setting `MOCK_MODE=True` redirects all LLM sub-agent queries to local Python mock functions, reducing LLM calls to **0** and bypassing API key quota lockouts completely while retaining the full Dev UI experience.
-
-### 3. Run the Playground UI
-Start the interactive developer interface:
-```bash
+# 4. Launch the interactive playground UI
 make playground
 ```
-*The Playground UI will open at **[http://localhost:18081](http://localhost:18081)**.*
 
-### 4. Run the API Server
-Start the agent as a local FastAPI web service:
-```bash
-make run
+*The playground opens a web UI at **[http://localhost:18081](http://localhost:18081)**.*
+
+---
+
+## 📝 Example Payloads
+
+### 1. Auto-Resolution (Access / Password Reset)
+
+```json
+{
+  "title": "Help! Account locked out after multiple attempts",
+  "description": "I cannot login to my account. My password was wrong. Please reset it.",
+  "user": "alice@company.com",
+  "priority": "Medium"
+}
 ```
+* **Expected Output**: Classified as `access`/`P3`. Matches runbook `RB-002` (Password Reset), resets password, publishes KB article, and closes as `AUTO_RESOLVED`.
 
-***
+### 2. Outage Deduplication (Network Outage Duplicate)
 
-## Testing Scenarios
-
-Use the following input payloads in the Playground UI to verify the different execution paths:
-
-### 1. Automated Runbook Resolution (Access/Lockout)
-*   **Payload (JSON)**:
-    ```json
-    {
-      "title": "Help! Account locked out after multiple attempts",
-      "description": "I cannot login to my account. My password was wrong. Please reset it.",
-      "user": "alice@company.com",
-      "priority": "Medium"
-    }
-    ```
-*   **Expected Behavior**: Security filter passes. Category mapped to `access`/`P3`. Matches runbook `RB-002` (Password Reset). Automatically resets password, drafts KB article, and closes as `AUTO_RESOLVED`.
-
-### 2. Storm Incident Deduplication (AWS Network Outage)
-*   **Payload (JSON)**:
-    ```json
-    {
-      "title": "VPN is down",
-      "description": "I cannot connect to the corporate VPN from US East. Getting connection failed errors.",
-      "user": "bob@company.com",
-      "priority": "High"
-    }
-    ```
-*   **Expected Behavior**: Identified as a duplicate of ongoing global outage `INC-8801` (AWS US-East Network Outage) via `get_active_incidents()`. Marked as `DEDUPLICATED` and linked to the parent incident.
+```json
+{
+  "title": "VPN is down",
+  "description": "I cannot connect to the corporate VPN from US East. Getting connection failed errors.",
+  "user": "bob@company.com",
+  "priority": "High"
+}
+```
+* **Expected Output**: Classified as `network`/`P2`. Maps to active regional outage `INC-8801` (AWS US-East Network Outage), marked as `DEDUPLICATED` and linked to it.
 
 ### 3. Human-in-the-Loop Approval (VPN Profile Corruption)
-*   **Payload (JSON)**:
-    ```json
-    {
-      "title": "VPN profile settings corrupt",
-      "description": "My VPN configuration profile appears to be corrupt, need a new profile config file.",
-      "user": "alice@company.com",
-      "priority": "High"
-    }
-    ```
-*   **Expected Behavior**: Classified as `network`/`P2`. Unique case (does not deduplicate to global outage). Since the user profile needs manual configuration adjustment, status shifts to `NEEDS_HUMAN_APPROVAL` and halts execution.
-*   **Action**: In the Dev UI, type **`YES`** in the response box to approve the profile reissuance. The ticket will close successfully as `AUTO_RESOLVED`.
 
-***
+```json
+{
+  "title": "VPN profile settings corrupt",
+  "description": "My VPN configuration profile appears to be corrupt, need a new profile config file.",
+  "user": "alice@company.com",
+  "priority": "High"
+}
+```
+* **Expected Output**: Classified as `network`/`P2`. Standalone local error. Pauses at `human_approval_node` requiring manager confirmation. Type `YES` to resume and close as `AUTO_RESOLVED`.
 
-## Troubleshooting
+---
 
-1.  **429 Resource Exhausted (Rate Limits)**
-    *   *Cause*: Gemini free tier keys have requests-per-minute (RPM) and requests-per-day (RPD) limits.
-    *   *Fix*: Set `GEMINI_MODEL=gemini-3.1-flash-lite` in `.env` to leverage higher limits. Our custom `RateLimitedGemini` model class dynamically spaces LLM requests with 5-second intervals.
-2.  **Windows Port Listener Conflict**
-    *   *Cause*: PowerShell Uvicorn file watcher conflicts on reload.
-    *   *Fix*: Run the following to force close listeners and restart the playground:
-        ```powershell
-        Get-Process -Id (Get-NetTCPConnection -LocalPort 18081, 8090 -ErrorAction SilentlyContinue).OwningProcess | Stop-Process -Force
-        make playground
-        ```
+## 🛠️ Troubleshooting
 
-***
+1. **429 Resource Exhausted (Rate Limits)**
+   - *Cause*: Google AI Studio free tier keys have daily request ceilings.
+   - *Fix*: Set `GEMINI_MODEL=gemini-3.1-flash-lite` in your `.env` file to leverage higher quotas. Our custom `RateLimitedGemini` decorator dynamically spaces request triggers with 5-second sleep intervals.
+   - *Mock Mode*: Set `MOCK_MODE=True` in `.env` to bypass API calls completely and run all sub-agents locally in python.
 
-## Demo Script
+2. **Windows Port Listener Conflict**
+   - *Cause*: PowerShell reload conflicts with background uvicorn handles.
+   - *Fix*: Kill active handles manually and restart uvicorn:
+     ```powershell
+     Get-Process -Id (Get-NetTCPConnection -LocalPort 18081, 8090 -ErrorAction SilentlyContinue).OwningProcess | Stop-Process -Force
+     make playground
+     ```
 
-A complete timed presentation walkthrough is available in [**`DEMO_SCRIPT.txt`**](DEMO_SCRIPT.txt).
+---
+
+## 🎙️ Demo Presentation
+
+A timed spoken walkthrough is available in [**`DEMO_SCRIPT.txt`**](DEMO_SCRIPT.txt) to guide you through presenting the application.
