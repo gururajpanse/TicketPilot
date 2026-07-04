@@ -195,21 +195,6 @@ Use the following input payloads in the Playground UI to verify the different ex
 
 ***
 
-## Push to GitHub
-
-1.  Create a new repository at https://github.com/new
-2.  Follow the instructions in the project root:
-    ```bash
-    git init
-    git add .
-    git commit -m "Initial commit: ticket-pilot ADK agent"
-    git branch -M main
-    git remote add origin https://github.com/<your-username>/ticket-pilot.git
-    git push -u origin main
-    ```
-
-***
-
 ## Demo Script
 
 A complete timed presentation walkthrough is available in [**`DEMO_SCRIPT.txt`**](DEMO_SCRIPT.txt).
