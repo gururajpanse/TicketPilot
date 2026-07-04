@@ -17,7 +17,7 @@ graph TD
     SEC -->|Unsafe / Non-Corporate Domain| SEC_EV[Security Event Handler]
     SEC -->|Clean / Authorized| ORCH[Triage Orchestrator Agent]
     
-    subgraph Sub-Agents (AgentTool Delegation)
+    subgraph "Sub-Agents (AgentTool Delegation)"
         ORCH --> ING[Ingestion Agent]
         ORCH --> CLS[Classification Agent]
         ORCH --> ESC[Escalation Agent]
@@ -26,7 +26,7 @@ graph TD
         ORCH --> RTE[Routing Agent]
     end
     
-    subgraph MCP Server Stdio Tools
+    subgraph "MCP Server Stdio Tools"
         CLS & DED & RES & RTE --> MCP[MCP Toolset]
         MCP -->|lookup_user_directory| DIR[(User Directory)]
         MCP -->|get_active_incidents| INC[(Active Incidents)]
