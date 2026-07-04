@@ -16,18 +16,9 @@
 
 ---
 
-## ✨ Features
-
-- **🛡️ Secure Ingestion** — Checks inputs for prompt injections, scrubs PII (Credit Cards, SSNs, Passwords), and enforces corporate email domain authorization.
-- **🔄 Graph-Based Control Flow** — Orchestrates support requests using a directed graph with custom routing nodes implemented via the ADK workflow.
-- **🤖 Multi-Agent Delegation** — Leverages a main triage orchestrator delegating dynamically to 6 sub-agents (Ingestion, Classification, Deduplication, Resolution, Routing, Escalation).
-- **🔌 Model Context Protocol (MCP)** — Integrated MCP server running on local stdio transport to query user directory profiles, active incident storms, and search runbooks.
-- **👤 Human-in-the-Loop (HITL)** — High-priority requests and manual configuration adjustments automatically pause for manager approval.
-- **⏱️ API Quota Protection (Rate-Limiting)** — Custom `RateLimitedGemini` decorator subclassing that delays requests to prevent free-tier 429 quota exhaustion.
-
----
-
 ## 🏗️ Architecture
+
+TicketPilot organizes its workflows using a deterministic directed acyclic graph (DAG) implemented in the ADK workflow runner:
 
 ```mermaid
 graph TD
@@ -81,118 +72,187 @@ graph TD
 
 ---
 
-## 📁 Project Structure
+## 💻 Tech Stack
+
+- **Core Runtime:** Python 3.11 - 3.13
+- **Package Management:** uv (Fast Python package manager)
+- **Agent Framework:** Google Agent Development Kit (ADK) 2.0 Workflow API
+- **Models:** Gemini 2.5-flash / Gemini-3.1-flash-lite
+- **MCP Server Framework:** FastMCP stdio server
+- **Command Runner:** Make/Makefile (supporting clean targets)
+
+---
+
+## 📂 Folder Structure
 
 ```
 ticket-pilot/
 ├── app/
-│   ├── agent.py                 # Main workflow graph & agent nodes
-│   ├── config.py                # Configuration parsing & environment variables
-│   ├── mcp_server.py            # Model Context Protocol stdio tools
+│   ├── agent.py                 # ADK Workflow graph & sub-agents definition
+│   ├── config.py                # Universal configuration and model settings
+│   ├── mcp_server.py            # FastMCP stdio server exposing database tools
 │   ├── agent_runtime_app.py     # FastAPI server entry point
 │   └── app_utils/
 │       ├── telemetry.py         # OpenTelemetry instrumentation
 │       └── typing.py            # Shared data types
-├── assets/                      # Professional images for documentation
+├── assets/                      # Image assets (banners, graphs)
 │   ├── architecture_diagram.png # 16:9 Agent graph flow diagram
 │   └── cover_page_banner.png    # 16:9 Premium banner
-├── tests/                       # Unit & integration testing suites
-│   ├── unit/
-│   └── integration/
-├── Makefile                     # Build & run automation
-├── pyproject.toml               # Dependencies & tooling configuration
-└── DEMO_SCRIPT.txt              # Timed demo presentation guide
+├── tests/                       # Integration & unit test files
+├── .env.example                 # Environment variables template
+├── Makefile                     # Automated installation and launch targets
+├── pyproject.toml               # uv dependency configuration
+└── README.md                    # User manual
 ```
 
 ---
 
-## 🚀 Quick Start
+## ⚙️ Installation
 
-### Prerequisites
-
-- **Python 3.11–3.13**
-- **uv** — [Install](https://docs.astral.sh/uv/getting-started/installation/)
-- **Gemini API Key** — Get one from [Google AI Studio](https://aistudio.google.com/)
-
-### Setup
-
+Clone the repository and install the dependencies:
 ```bash
-# 1. Clone the repository
 git clone https://github.com/gururajpanse/TicketPilot.git
 cd ticket-pilot
-
-# 2. Configure your environment file
-cp .env.example .env
-# Edit .env and insert your GOOGLE_API_KEY
-
-# 3. Install dependencies
 make install
+```
 
-# 4. Launch the interactive playground UI
+---
+
+## 🔒 Configuration (.env)
+
+Setup your environment configurations:
+
+1. Copy the template:
+   ```bash
+   cp .env.example .env
+   ```
+2. Open `.env` and add your Gemini API Key:
+   ```env
+   GOOGLE_API_KEY=your_gemini_api_key_here
+   GOOGLE_GENAI_USE_VERTEXAI=False
+   GEMINI_MODEL=gemini-3.1-flash-lite
+   MOCK_MODE=False
+   ```
+   *(Ensure `MOCK_MODE=True` is enabled if you have exhausted your API key daily free-tier quota, which runs all sub-agents locally in python).*
+
+---
+
+## 🚀 Running the Project
+
+Launch the Dev Playground UI:
+```bash
 make playground
 ```
+*(Opens the ADK testing web application at http://localhost:18081)*
 
-*The playground opens a web UI at **[http://localhost:18081](http://localhost:18081)**.*
+Start local API Server mode:
+```bash
+make run
+```
+
+Run unit and integration tests:
+```bash
+make test
+```
 
 ---
 
-## 📝 Example Payloads
+## 💡 Usage
 
-### 1. Auto-Resolution (Access / Password Reset)
+### Running an Analysis
+1. Open the Dev Playground UI at http://localhost:18081.
+2. Click **New Session** at the top.
+3. Paste a ticket query in JSON or raw text. Example:
+   ```json
+   {
+     "title": "VPN profile settings corrupt",
+     "description": "My VPN configuration profile appears to be corrupt, need a new profile config file.",
+     "user": "alice@company.com",
+     "priority": "High"
+   }
+   ```
+4. If the request requires human review, the agent will pause. Simply type `YES` in the response box to proceed.
+
+### Test Case Scenarios
+- **Auto-Resolution:** Input an account lockout query. It matches standard password reset runbooks (`RB-002`), auto-resolves, and publishes a KB article.
+- **Storm Incident Deduplication:** Input a general VPN outage report. It queries active outages, identifies the AWS incident (`INC-8801`), and maps the ticket to it.
+- **Human-in-the-Loop Review:** Input a High priority VPN configuration adjustments query. It triggers a human approval prompt.
+
+---
+
+## 📊 Example Output
+
+When a ticket is successfully resolved and approved by the human operator, TicketPilot compiles a structured state output:
 
 ```json
 {
-  "title": "Help! Account locked out after multiple attempts",
-  "description": "I cannot login to my account. My password was wrong. Please reset it.",
-  "user": "alice@company.com",
-  "priority": "Medium"
-}
-```
-* **Expected Output**: Classified as `access`/`P3`. Matches runbook `RB-002` (Password Reset), resets password, publishes KB article, and closes as `AUTO_RESOLVED`.
-
-### 2. Outage Deduplication (Network Outage Duplicate)
-
-```json
-{
-  "title": "VPN is down",
-  "description": "I cannot connect to the corporate VPN from US East. Getting connection failed errors.",
-  "user": "bob@company.com",
-  "priority": "High"
-}
-```
-* **Expected Output**: Classified as `network`/`P2`. Maps to active regional outage `INC-8801` (AWS US-East Network Outage), marked as `DEDUPLICATED` and linked to it.
-
-### 3. Human-in-the-Loop Approval (VPN Profile Corruption)
-
-```json
-{
+  "ticket_id": "TICK-2900",
   "title": "VPN profile settings corrupt",
-  "description": "My VPN configuration profile appears to be corrupt, need a new profile config file.",
-  "user": "alice@company.com",
-  "priority": "High"
+  "status": "AUTO_RESOLVED",
+  "category": "network",
+  "severity": "P2",
+  "deduplicated": false,
+  "parent_incident_id": "",
+  "resolution_notes": "The user has a corrupt VPN profile. Following standard procedure RB-001: 1. Reset VPN profile in settings. 2. Clear local browser DNS cache. 3. Re-verify MFA token. 4. Restart connection. Since this involves manual config profile adjustments, it requires human approval per protocol.",
+  "kb_article_drafted": false,
+  "kb_article_content": "",
+  "audit_log": [
+    {
+      "timestamp": "2026-07-05 01:29:00.800259",
+      "event": "INITIAL_TRIAGE",
+      "severity": "INFO",
+      "message": "Triage started for ticket TICK-2900 submitted by alice@company.com"
+    },
+    {
+      "timestamp": "2026-07-05 01:31:06.095256",
+      "event": "HUMAN_APPROVAL",
+      "severity": "INFO",
+      "message": "Human approved resolution. Feedback: yes"
+    },
+    {
+      "timestamp": "2026-07-05 01:31:06.113535",
+      "event": "TICKET_CLOSED",
+      "severity": "INFO",
+      "message": "Ticket TICK-2900 processing ended with status: AUTO_RESOLVED"
+    }
+  ]
 }
 ```
-* **Expected Output**: Classified as `network`/`P2`. Standalone local error. Pauses at `human_approval_node` requiring manager confirmation. Type `YES` to resume and close as `AUTO_RESOLVED`.
 
 ---
 
-## 🛠️ Troubleshooting
+## 🛡️ Security Features
 
-1. **429 Resource Exhausted (Rate Limits)**
-   - *Cause*: Google AI Studio free tier keys have daily request ceilings.
-   - *Fix*: Set `GEMINI_MODEL=gemini-3.1-flash-lite` in your `.env` file to leverage higher quotas. Our custom `RateLimitedGemini` decorator dynamically spaces request triggers with 5-second sleep intervals.
-   - *Mock Mode*: Set `MOCK_MODE=True` in `.env` to bypass API calls completely and run all sub-agents locally in python.
+- **PII Scrubbing:** Automatically redacts credit cards, emails, and passwords from incoming description inputs.
+- **Prompt Injection Block:** Rejects prompt injection keywords like `ignore guidelines` or `system instruction override` instantly.
+- **Domain Verification:** Enforces email domain verification (blocking anything outside `@company.com`, `@corp.com`, or `@internal.net`).
 
-2. **Windows Port Listener Conflict**
-   - *Cause*: PowerShell reload conflicts with background uvicorn handles.
-   - *Fix*: Kill active handles manually and restart uvicorn:
-     ```powershell
-     Get-Process -Id (Get-NetTCPConnection -LocalPort 18081, 8090 -ErrorAction SilentlyContinue).OwningProcess | Stop-Process -Force
-     make playground
-     ```
+---
+
+## 🔮 Future Improvements
+
+- **Active Directory Sync:** Dynamic user listings synchronization.
+- **Cloud Ticket Provider Integration:** Scanners for JIRA and ServiceNow ticketing platforms.
+- **Automated Alerts:** Emails on P1 critical alert pager triggers.
+
+---
+
+## 🤝 Contributing
+
+1. Fork the Project.
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`).
+4. Push to the Branch (`git push origin feature/AmazingFeature`).
+5. Open a Pull Request.
+
+---
+
+## ✍️ Authors
+
+- **Gururaj Panse** (GitHub: [@gururajpanse](https://github.com/gururajpanse))
 
 ---
 
 ## 🎙️ Demo Presentation
 
-A timed spoken walkthrough is available in [**`DEMO_SCRIPT.txt`**](DEMO_SCRIPT.txt) to guide you through presenting the application.
+A complete timed presentation script is available in [**`DEMO_SCRIPT.txt`**](DEMO_SCRIPT.txt).
