@@ -1,13 +1,3 @@
----
-title: TicketPilot
-emoji: 🎫
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-app_port: 18081
-pinned: false
----
-
 # 🎫 TicketPilot — Autonomous IT Service Desk Triage & Resolution Agent
 
 > An autonomous, secure IT service desk triage and resolution agent built with **Google ADK 2.0** and Gemini that automatically ingests, classifies, deduplicates, and resolves incoming support requests through a graph-based workflow — combining LLM intelligence, security guardrails, custom MCP tools, and human-in-the-loop oversight.
