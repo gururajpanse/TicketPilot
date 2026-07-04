@@ -1,0 +1,34 @@
+[0:00 — HOOK]
+Imagine an IT service desk flooded with hundreds of repetitive tickets during a major network outage, while helpdesk agents struggle to triage issues, match them to runbooks, and avoid security leaks. This is where TicketPilot steps in—an autonomous, secure, multi-agent IT Service Desk assistant designed to classify, deduplicate, auto-resolve, and route support tickets.
+
+[0:20 — WHAT IT IS]
+Hello everyone. Today I am presenting TicketPilot, built for the Agents for Business track using the Google Agent Development Kit 2.0. TicketPilot uses a network of specialized sub-agents and deterministic security filters to resolve IT tickets with speed, safety, and human accountability.
+
+[0:40 — SHOW THE BANNER]
+(show assets/cover_page_banner.png)
+As you can see on the screen, TicketPilot acts as an intelligent co-pilot for IT operations. It works in the background, continuously analyzing incoming support streams from Slack, emails, and corporate databases, making decision logging and security auditing completely automatic.
+
+[1:00 — ARCHITECTURE]
+(show assets/architecture_diagram.png)
+Let's take a look at the system architecture. (pause) Every request begins at the Security Checkpoint. This is a deterministic node that performs prompt injection checks, scrubs credit cards or passwords, and blocks unauthorized external emails.
+If the request is clean, it is handed over to the Triage Orchestrator. The Orchestrator does not work alone. Instead, it delegates specific tasks to our six sub-agents:
+First, the Ingestion Agent parses and normalizes the request details, saving them to the shared workflow state.
+Next, the Classification Agent determines the IT category and assigns a severity from P1 to P4.
+The Escalation Agent immediately handles P1 events, bypassing the normal queue to page on-call engineers via our PagerDuty tool.
+If it is a standard issue, the Deduplication Agent queries the MCP server for active incident storms to cluster duplicates.
+The Resolution Agent searches the runbook database to apply standard automated resolutions, drafting knowledge base articles for new solutions.
+And finally, the Routing Agent assigns unresolved tickets to specialist queues like the Network or Access teams.
+At the end, if a ticket requires operator verification, it enters the Human-in-the-Loop approval node, pausing the workflow until approved.
+
+[2:00 — LIVE DEMO]
+(switch to playground at localhost:18081)
+Now let's switch to the local developer playground to see TicketPilot in action. (pause)
+For our first test, I am sending a ticket regarding an account lockout from a corporate user. The security checkpoint scrubs any raw password text, and the orchestrator normalizes it. The classification agent categorizes it as access-related. The resolution agent queries our MCP runbook database, matches the password lockout runbook, auto-resolves the ticket, drafts a knowledge base article, and updates the status to AUTO_RESOLVED. All of this completes in a few seconds. (pause)
+In our second test, we simulate an outage. The user submits a ticket reporting that their VPN is down in US East. The classification agent sets the severity to P2. The deduplication agent queries the MCP server's active outages, matches this request to the ongoing US-East AWS network outage, and immediately labels it DEDUPLICATED, linking it to the parent incident to prevent queue bloat. (pause)
+Lastly, for our third test, we send a ticket about a corrupted VPN profile configuration. Because this is a high-severity ticket modifying user profiles, the resolution agent triggers the needs human approval status. The workflow immediately pauses and yields a request input prompt. Once I input YES, the execution resumes and closes the ticket as resolved.
+
+[3:00 — SECURITY & MCP]
+What makes TicketPilot unique is its robust security and tool integration. The security checkpoint node filters prompt injections and PII before any LLM execution, ensuring complete compliance. Meanwhile, our Model Context Protocol server connects directly to corporate directories, active incident alerts, and runbooks over standard I/O, keeping the AI connected but sandboxed.
+
+[3:30 — IMPACT / CLOSE]
+TicketPilot drastically reduces the mean time to resolution, eliminates queue clutter during major outages, and guarantees data privacy. It strikes the perfect balance between AI automation and human safety. Thank you. (pause)
