@@ -175,9 +175,45 @@ make test
 4. If the request requires human review, the agent will pause. Simply type `YES` in the response box to proceed.
 
 ### Test Case Scenarios
-- **Auto-Resolution:** Input an account lockout query. It matches standard password reset runbooks (`RB-002`), auto-resolves, and publishes a KB article.
-- **Storm Incident Deduplication:** Input a general VPN outage report. It queries active outages, identifies the AWS incident (`INC-8801`), and maps the ticket to it.
-- **Human-in-the-Loop Review:** Input a High priority VPN configuration adjustments query. It triggers a human approval prompt.
+
+#### Test Case 1: Auto-Resolution (Access / Password Lockout)
+- **Input (JSON)**:
+  ```json
+  {
+    "title": "Help! Account locked out after multiple attempts",
+    "description": "I cannot login to my account. My password was wrong. Please reset it.",
+    "user": "alice@company.com",
+    "priority": "Medium"
+  }
+  ```
+- **Expected Path**: `security_checkpoint` passes successfully. `triage_orchestrator` classifies the ticket as `access`/`P3`. `deduplication_agent` finds no duplicate incident storms. `resolution_agent` searches the MCP runbooks, matches the **Password Reset** runbook (`RB-002`), applies the steps, drafts a KB article, and closes the ticket.
+- **Check**: The UI should show the ticket status as `AUTO_RESOLVED`, `resolution_notes` listing reset steps, and `kb_article_drafted: true`.
+
+#### Test Case 2: Outage Deduplication (Network / Outage Duplicate)
+- **Input (JSON)**:
+  ```json
+  {
+    "title": "VPN is down",
+    "description": "I cannot connect to the corporate VPN from US East. Getting connection failed errors.",
+    "user": "bob@company.com",
+    "priority": "High"
+  }
+  ```
+- **Expected Path**: `security_checkpoint` passes. `triage_orchestrator` classifies it as `network`/`P2`. `deduplication_agent` queries the MCP tool `get_active_incidents()`, matches the description with active outage `INC-8801` (AWS US-East-1 Network Outage), calls `set_duplicate_action`, and clusters it.
+- **Check**: The UI should output `deduplicated: true` and `parent_incident_id: "INC-8801"`.
+
+#### Test Case 3: Human-in-the-Loop Approval (VPN Profile Corruption)
+- **Input (JSON)**:
+  ```json
+  {
+    "title": "VPN profile settings corrupt",
+    "description": "My VPN configuration profile appears to be corrupt, need a new profile config file.",
+    "user": "alice@company.com",
+    "priority": "High"
+  }
+  ```
+- **Expected Path**: Classifies as `network`/`P2`. `deduplication_agent` checks and finds no outage duplicate. `resolution_agent` matches the **VPN Connection Reset** runbook (`RB-001`), but because the ticket has a `High` priority and involves config adjustments, it triggers the `NEEDS_HUMAN_APPROVAL` status. The workflow pauses at `human_approval_node` and yields a `RequestInput` event.
+- **Check**: The dashboard UI will display a prompt asking you to approve the resolution. Reply with **`YES`** to resume the workflow. The ticket closes with `AUTO_RESOLVED` status and the `human_approved: true` state flag saved in the audit logs.
 
 ---
 
