@@ -16,6 +16,17 @@
 
 ---
 
+## ✨ Features
+
+- **🛡️ Secure Ingestion** — Checks inputs for prompt injections, scrubs PII (Credit Cards, SSNs, Passwords), and enforces corporate email domain authorization.
+- **🔄 Graph-Based Control Flow** — Orchestrates support requests using a directed graph with custom routing nodes implemented via the ADK workflow.
+- **🤖 Multi-Agent Delegation** — Leverages a main triage orchestrator delegating dynamically to 6 sub-agents (Ingestion, Classification, Deduplication, Resolution, Routing, Escalation).
+- **🔌 Model Context Protocol (MCP)** — Integrated MCP server running on local stdio transport to query user directory profiles, active incident storms, and search runbooks.
+- **👤 Human-in-the-Loop (HITL)** — High-priority requests and manual configuration adjustments automatically pause for manager approval.
+- **⏱️ API Quota Protection (Rate-Limiting)** — Custom `RateLimitedGemini` decorator subclassing that delays requests to prevent free-tier 429 quota exhaustion.
+
+---
+
 ## 🏗️ Architecture
 
 TicketPilot organizes its workflows using a deterministic directed acyclic graph (DAG) implemented in the ADK workflow runner:
@@ -72,37 +83,27 @@ graph TD
 
 ---
 
-## 💻 Tech Stack
-
-- **Core Runtime:** Python 3.11 - 3.13
-- **Package Management:** uv (Fast Python package manager)
-- **Agent Framework:** Google Agent Development Kit (ADK) 2.0 Workflow API
-- **Models:** Gemini 2.5-flash / Gemini-3.1-flash-lite
-- **MCP Server Framework:** FastMCP stdio server
-- **Command Runner:** Make/Makefile (supporting clean targets)
-
----
-
-## 📂 Folder Structure
+## 📁 Project Structure
 
 ```
 ticket-pilot/
 ├── app/
-│   ├── agent.py                 # ADK Workflow graph & sub-agents definition
-│   ├── config.py                # Universal configuration and model settings
-│   ├── mcp_server.py            # FastMCP stdio server exposing database tools
+│   ├── agent.py                 # Main workflow graph & agent nodes
+│   ├── config.py                # Configuration parsing & environment variables
+│   ├── mcp_server.py            # Model Context Protocol stdio tools
 │   ├── agent_runtime_app.py     # FastAPI server entry point
 │   └── app_utils/
 │       ├── telemetry.py         # OpenTelemetry instrumentation
 │       └── typing.py            # Shared data types
-├── assets/                      # Image assets (banners, graphs)
+├── assets/                      # Professional images for documentation
 │   ├── architecture_diagram.png # 16:9 Agent graph flow diagram
 │   └── cover_page_banner.png    # 16:9 Premium banner
-├── tests/                       # Integration & unit test files
-├── .env.example                 # Environment variables template
-├── Makefile                     # Automated installation and launch targets
-├── pyproject.toml               # uv dependency configuration
-└── README.md                    # User manual
+├── tests/                       # Unit & integration testing suites
+│   ├── unit/
+│   └── integration/
+├── Makefile                     # Build & run automation
+├── pyproject.toml               # Dependencies & tooling configuration
+└── DEMO_SCRIPT.txt              # Timed demo presentation guide
 ```
 
 ---
