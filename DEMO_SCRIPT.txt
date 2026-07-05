@@ -1,8 +1,8 @@
 [0:00 — HOOK]
-Imagine an IT service desk flooded with hundreds of repetitive tickets during a major network outage, while helpdesk agents struggle to triage issues, match them to runbooks, and avoid security leaks. This is where TicketPilot steps in—an autonomous, secure, multi-agent IT Service Desk assistant designed to classify, deduplicate, auto-resolve, and route support tickets.
+Imagine an IT service desk flooded with hundreds of repetitive tickets during a major network outage, while helpdesk teams struggle to triage issues, check for duplicate incident storms, and avoid security leaks. This is where TicketPilot steps in—an autonomous, secure, multi-agent IT Service Desk assistant designed to classify, deduplicate, auto-resolve, and route support tickets.
 
 [0:20 — WHAT IT IS]
-Hello everyone. Today I am presenting TicketPilot, built for the Agents for Business track using the Google Agent Development Kit 2.0. TicketPilot uses a network of specialized sub-agents and deterministic security filters to resolve IT tickets with speed, safety, and human accountability.
+Hello everyone. Today I am presenting TicketPilot, built for the Agents for Business track using the Google Agent Development Kit 2.0. TicketPilot uses a network of specialized sub-agents, custom Model Context Protocol stdio tools, and deterministic security filters to resolve IT tickets with speed, safety, and human-in-the-loop accountability.
 
 [0:40 — SHOW THE BANNER]
 (show assets/cover_page_banner.png)
@@ -10,25 +10,38 @@ As you can see on the screen, TicketPilot acts as an intelligent co-pilot for IT
 
 [1:00 — ARCHITECTURE]
 (show assets/architecture_diagram.png)
-Let's take a look at the system architecture. (pause) Every request begins at the Security Checkpoint. This is a deterministic node that performs prompt injection checks, scrubs credit cards or passwords, and blocks unauthorized external emails.
-If the request is clean, it is handed over to the Triage Orchestrator. The Orchestrator does not work alone. Instead, it delegates specific tasks to our six sub-agents:
-First, the Ingestion Agent parses and normalizes the request details, saving them to the shared workflow state.
-Next, the Classification Agent determines the IT category and assigns a severity from P1 to P4.
-The Escalation Agent immediately handles P1 events, bypassing the normal queue to page on-call engineers via our PagerDuty tool.
-If it is a standard issue, the Deduplication Agent queries the MCP server for active incident storms to cluster duplicates.
-The Resolution Agent searches the runbook database to apply standard automated resolutions, drafting knowledge base articles for new solutions.
-And finally, the Routing Agent assigns unresolved tickets to specialist queues like the Network or Access teams.
-At the end, if a ticket requires operator verification, it enters the Human-in-the-Loop approval node, pausing the workflow until approved.
+Let's take a look at our system architecture. (pause) 
+
+Every incoming request begins at the Security Checkpoint. If an email is from an unauthorized domain or contains prompt injections, it is immediately diverted to the Security Event Handler, which bypasses the orchestrator to output a blocked event. 
+
+Clean and authorized requests are handed to the Triage Orchestrator Agent. The Orchestrator delegates specific tasks to six specialized sub-agents:
+
+First, the Ingestion Agent parses and normalizes details into the shared workflow context state.
+
+Second, the Classification Agent assigns the IT category and determines ticket severity from P1 to P4.
+
+Third, the Escalation Agent instantly alerts on-call engineers for critical P1 events.
+
+Fourth, the Deduplication Agent queries the MCP server's active outages tool to cluster incoming duplicate tickets during major storms.
+
+Fifth, the Resolution Agent searches the MCP runbook database to apply standard automated fixes and drafts knowledge base articles.
+
+And sixth, the Routing Agent assigns any unresolved tickets directly to human specialist queues.
+
+After the orchestrator completes, our post-orchestrator router decides the next node. If a ticket status is NEEDS_APPROVAL, the flow routes to the Human Approval Node, yielding a RequestInput that pauses execution. Once the operator inputs their response, the workflow resumes and passes to the Final Output Node to deliver the structured JSON response.
 
 [2:00 — LIVE DEMO]
 (switch to playground at localhost:18081)
 Now let's switch to the local developer playground to see TicketPilot in action. (pause)
-For our first test, I am sending a ticket regarding an account lockout from a corporate user. The security checkpoint scrubs any raw password text, and the orchestrator normalizes it. The classification agent categorizes it as access-related. The resolution agent queries our MCP runbook database, matches the password lockout runbook, auto-resolves the ticket, drafts a knowledge base article, and updates the status to AUTO_RESOLVED. All of this completes in a few seconds. (pause)
-In our second test, we simulate an outage. The user submits a ticket reporting that their VPN is down in US East. The classification agent sets the severity to P2. The deduplication agent queries the MCP server's active outages, matches this request to the ongoing US-East AWS network outage, and immediately labels it DEDUPLICATED, linking it to the parent incident to prevent queue bloat. (pause)
-Lastly, for our third test, we send a ticket about a corrupted VPN profile configuration. Because this is a high-severity ticket modifying user profiles, the resolution agent triggers the needs human approval status. The workflow immediately pauses and yields a request input prompt. Once I input YES, the execution resumes and closes the ticket as resolved.
+
+For our first scenario, I am sending a ticket regarding an account lockout from a corporate user. The security checkpoint validates the request, and the orchestrator hands it off. The classification agent categorizes it as access-related. The resolution agent matches the password lockout runbook, resets the account password, publishes a KB article, and closes the ticket as AUTO_RESOLVED. All of this completes in just a few seconds. (pause)
+
+In our second scenario, we simulate an outage storm. The user submits a ticket reporting that their VPN is down in US East. The classification agent sets the severity to P2. The deduplication agent queries active incidents via the MCP server, matches it to the ongoing regional AWS network outage, and labels it DEDUPLICATED, linking it to the parent incident to prevent duplicate queue bloat. (pause)
+
+Lastly, for our third scenario, we send a ticket about a corrupted VPN configuration profile. Because the user is asking to modify profile configurations, the resolution agent triggers the needs human approval status. The workflow pauses and displays an approval prompt. Once I input YES as the operator, the execution resumes and closes the ticket as resolved.
 
 [3:00 — SECURITY & MCP]
-What makes TicketPilot unique is its robust security and tool integration. The security checkpoint node filters prompt injections and PII before any LLM execution, ensuring complete compliance. Meanwhile, our Model Context Protocol server connects directly to corporate directories, active incident alerts, and runbooks over standard I/O, keeping the AI connected but sandboxed.
+What makes TicketPilot unique is its robust security and tool integration. The security checkpoint node filters prompt injections, enforces domain compliance, and scrubs PII before any LLM execution. Meanwhile, our Model Context Protocol server connects directly to directory databases, active outages, and runbooks over stdio, keeping the AI connected yet safely sandboxed.
 
 [3:30 — IMPACT / CLOSE]
 TicketPilot drastically reduces the mean time to resolution, eliminates queue clutter during major outages, and guarantees data privacy. It strikes the perfect balance between AI automation and human safety. Thank you. (pause)
