@@ -20,13 +20,13 @@ First, the Ingestion Agent parses and normalizes details into the shared workflo
 
 Second, the Classification Agent assigns the IT category and determines ticket severity from P1 to P4.
 
-Third, the Escalation Agent instantly alerts on-call engineers for critical P1 events.
+Third,the Deduplication Agent queries the MCP server's active outages tool to cluster incoming duplicate tickets during major storms. 
 
-Fourth, the Deduplication Agent queries the MCP server's active outages tool to cluster incoming duplicate tickets during major storms.
+Fourth,  the Resolution Agent searches the MCP runbook database to apply standard automated fixes and drafts knowledge base articles.
 
-Fifth, the Resolution Agent searches the MCP runbook database to apply standard automated fixes and drafts knowledge base articles.
+Fifth, the Routing Agent assigns any unresolved tickets directly to human specialist queues.
 
-And sixth, the Routing Agent assigns any unresolved tickets directly to human specialist queues.
+And sixth,the Escalation Agent instantly alerts on-call engineers for critical P1 events.
 
 After the orchestrator completes, our post-orchestrator router decides the next node. If a ticket status is NEEDS_APPROVAL, the flow routes to the Human Approval Node, yielding a RequestInput that pauses execution. Once the operator inputs their response, the workflow resumes and passes to the Final Output Node to deliver the structured JSON response.
 
