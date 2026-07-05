@@ -21,56 +21,7 @@ IT Helpdesks face distinct challenges that inhibit operational efficiency and co
 ## 3. Solution Architecture
 
 TicketPilot addresses these problems using a deterministic directed acyclic graph (DAG) implemented via the ADK 2.0 Workflow API. The architecture decouples ingestion security, agent orchestration, specialist tool execution, and human approval:
-
-```mermaid
-graph TD
-    START[Client Request] --> SEC[Security Checkpoint]
-    SEC -->|Unsafe / Non-Corporate Domain| SEC_EV[Security Event Handler]
-    SEC -->|Clean / Authorized| ORCH[Triage Orchestrator Agent]
-    
-    subgraph "Sub-Agents (AgentTool Delegation)"
-        ORCH --> ING[Ingestion Agent]
-        ORCH --> CLS[Classification Agent]
-        ORCH --> ESC[Escalation Agent]
-        ORCH --> DED[Deduplication Agent]
-        ORCH --> RES[Resolution Agent]
-        ORCH --> RTE[Routing Agent]
-    end
-    
-    subgraph "MCP Server Stdio Tools"
-        CLS & DED & RES & RTE --> MCP[MCP Toolset]
-        MCP -->|lookup_user_directory| DIR[(User Directory)]
-        MCP -->|get_active_incidents| INC[(Active Incidents)]
-        MCP -->|search_runbooks| RUN[(Runbooks Database)]
-        MCP -->|write_kb_article| WRI[(KB Publisher)]
-    end
-
-    ING -->|set_ticket_details_action| ST[ctx.state]
-    CLS -->|set_classification_action| ST
-    DED -->|set_duplicate_action| ST
-    RES -->|set_resolution_action / draft_kb_article| ST
-    RTE -->|assign_to_specialist_action| ST
-    ESC -->|trigger_p1_alert_action| ST
-
-    ORCH --> ROUTE{post_orchestrator_router}
-    ROUTE -->|NEEDS_APPROVAL| HITL[Human Approval Node]
-    ROUTE -->|FINAL| OUT[Final Output Node]
-    
-    HITL -->|yield RequestInput| USER[Human Operator ✋]
-    USER -->|Resume Input| HITL
-    HITL --> OUT
-    SEC_EV --> OUT
-    OUT --> END[Structured JSON Output]
-
-    style START fill:#4285F4,stroke:#333,color:#fff
-    style SEC fill:#FBBC04,stroke:#333,color:#000
-    style SEC_EV fill:#EA4335,stroke:#333,color:#fff
-    style ORCH fill:#4285F4,stroke:#333,color:#fff
-    style HITL fill:#9C27B0,stroke:#333,color:#fff
-    style USER fill:#9C27B0,stroke:#333,color:#fff
-    style OUT fill:#607D8B,stroke:#333,color:#fff
-    style END fill:#34A853,stroke:#333,color:#fff
-```
+![TicketPilot Architecture Diagram](https://raw.githubusercontent.com/gururajpanse/TicketPilot/main/assets/architecture_diagram.png)
 
 ### Context State Management (`ctx.state`)
 The system preserves state changes within a central context schema. Sub-agents do not edit data directly; instead, they output structured schemas which are captured and updated by registered graph action wrappers:
